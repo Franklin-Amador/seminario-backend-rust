@@ -5,3 +5,5 @@ pub mod categories;
 pub mod courses;
 pub mod roles;
 pub mod home;
+pub mod assignment;
+pub mod sections;

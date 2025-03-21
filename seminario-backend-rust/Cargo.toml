@@ -7,7 +7,11 @@ edition = "2021"
 actix-web = "4"             # Framework web
 dotenvy = "0.15"            # Cargar variables de entorno desde .env
 tokio = { version = "1", features = ["full"] } # Requerido para async
-sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-native-tls"] } # Conector PostgreSQL
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls", "chrono"] }
 tokio-postgres = { version = "0.7", features = ["with-uuid-0_8", "with-serde_json-1"] }
 deadpool-postgres = "0.14.1" # Pool de conexiones
 serde = { version = "1", features = ["derive"] } # Serialización/Deserialización JSON
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4"
+env_logger = "0.11.7"

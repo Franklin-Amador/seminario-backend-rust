@@ -6,6 +6,8 @@ mod routes;
 use actix_web::{web, App, HttpServer};
 use dotenvy::dotenv;
 use std::env;
+// use env_logger::Env;
+// use log::info;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -68,7 +70,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .configure(routes::config_routes)
     })
-    .bind("0.0.0.0:8080")? // ¡IMPORTANTE! Usar 0.0.0.0 para aceptar conexiones externas
+    .bind("127.0.0.1:8080")? // ¡IMPORTANTE! Usar 0.0.0.0 para aceptar conexiones externas
     .run()
     .await
 }

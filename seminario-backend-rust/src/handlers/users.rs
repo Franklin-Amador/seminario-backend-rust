@@ -5,6 +5,11 @@ use crate::models::user::User;
 // paquetes como path y error van por default no se necesitan llamar
 // para los let de la query se usa la funcion sqlx::query_as
 
+fn handle_db_error(err: sqlx::Error) -> HttpResponse {
+    eprintln!("❌ Error en la base de datos: {}", err);
+    HttpResponse::InternalServerError().body("Error en la base de datos")
+}
+
 #[get("/users")]
 async fn get_users(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
     let users = sqlx::query_as::<_, User>("SELECT id, username FROM get_all_users()")
@@ -13,10 +18,8 @@ async fn get_users(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
 
     match users {
         Ok(data) => HttpResponse::Ok().json(data),
-        Err(err) => {
-            eprintln!("❌ Error consultando usuarios: {}", err);
-            HttpResponse::InternalServerError().body("Error en la base de datos")
-        }
+        Err(err) => handle_db_error(err),
+        
     }
 }
 
@@ -31,9 +34,6 @@ async fn get_user_by_id(pool: web::Data<Pool<sqlx::Postgres>>, path: web::Path<i
     match user {
         Ok(Some(data)) => HttpResponse::Ok().json(data),
         Ok(None) => HttpResponse::NotFound().body("Usuario no encontrado"),
-        Err(err) => {
-            eprintln!("❌ Error consultando usuario: {}", err);
-            HttpResponse::InternalServerError().body("Error en la base de datos")
-        }
+        Err(err) => handle_db_error(err),
     }
 }
