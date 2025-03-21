@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: campus_virtual_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: campus_virtual
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+  rust_api:
+    build: .
+    container_name: rust_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://admin:admin123@db:5432/campus_virtual
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
