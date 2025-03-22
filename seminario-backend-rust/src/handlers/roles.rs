@@ -1,6 +1,7 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use sqlx::Pool;
 use crate::models::rol::Rol;
+use crate::error::error::handle_db_error;
 
 // paquetes como path y error van por default no se necesitan llamar
 // para los let de la query se usa la funcion sqlx::query_as
@@ -13,10 +14,7 @@ async fn get_roles(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
 
     match roles {
         Ok(data) => HttpResponse::Ok().json(data),
-        Err(err) => {
-            eprintln!("❌ Error consultando roles: {}", err);
-            HttpResponse::InternalServerError().body("Error en la base de datos")
-        }
+        Err(err) => handle_db_error(err),
     }
 }
 
@@ -31,9 +29,6 @@ async fn get_rol(pool: web::Data<Pool<sqlx::Postgres>>, path: web::Path<i32>) ->
     match rol {
         Ok(Some(data)) => HttpResponse::Ok().json(data),  
         Ok(None) => HttpResponse::NotFound().body("Rol no encontrado"),  
-        Err(err) => {
-            eprintln!("❌ Error consultando roles: {}", err); 
-            HttpResponse::InternalServerError().body("Error en la base de datos") 
-        }
+        Err(err) => handle_db_error(err),
     }
 }

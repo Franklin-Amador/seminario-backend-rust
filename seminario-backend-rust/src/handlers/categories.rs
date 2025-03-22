@@ -1,6 +1,8 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use sqlx::Pool;
 use crate::models::category::Category;
+use crate::error::error::handle_db_error;
+
 
 // paquetes como path y error van por default no se necesitan llamar
 // para los let de la query se usa la funcion sqlx::query_as
@@ -13,9 +15,6 @@ async fn get_categories(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder
 
     match categories {
         Ok(data) => HttpResponse::Ok().json(data),
-        Err(err) => {
-            eprintln!("❌ Error consultando categorías: {}", err);
-            HttpResponse::InternalServerError().body("Error en la base de datos")
-        }
+        Err(err) => handle_db_error(err),
     }
 }

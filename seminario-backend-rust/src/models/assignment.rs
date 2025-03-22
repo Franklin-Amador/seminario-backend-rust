@@ -59,8 +59,8 @@ pub struct UpdateAssignmentDto {
     pub name: Option<String>,
     pub intro: Option<String>,
     pub section: Option<i32>,
-    pub duedate: Option<String>, // Fecha como texto
-    pub allowsubmissionsfromdate: Option<String>, // Fecha como texto
+    pub duedate: Option<String>, 
+    pub allowsubmissionsfromdate: Option<String>, 
     pub grade: Option<i32>,
     pub alwaysshowdescription: Option<bool>,
     pub nosubmissions: Option<bool>,

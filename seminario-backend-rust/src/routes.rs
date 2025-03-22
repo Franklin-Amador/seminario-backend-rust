@@ -18,5 +18,7 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
        .service(assignment::delete_assignment)
        .service(sections::get_secciones)
        .service(sections::get_course_sections)
+       .service(sections::create_section)
+       .service(sections::update_section)
        .service(roles::get_rol);
 }

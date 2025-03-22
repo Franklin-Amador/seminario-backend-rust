@@ -1,14 +1,10 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use sqlx::Pool;
 use crate::models::user::User;
+use crate::error::error::handle_db_error;
 
 // paquetes como path y error van por default no se necesitan llamar
 // para los let de la query se usa la funcion sqlx::query_as
-
-fn handle_db_error(err: sqlx::Error) -> HttpResponse {
-    eprintln!("❌ Error en la base de datos: {}", err);
-    HttpResponse::InternalServerError().body("Error en la base de datos")
-}
 
 #[get("/users")]
 async fn get_users(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {

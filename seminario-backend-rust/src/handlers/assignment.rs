@@ -3,14 +3,7 @@ use sqlx::{Pool, Postgres};
 use crate::models::assignment::{Assignment, AssignmentsProx, CreateAssignmentDto, UpdateAssignmentDto};
 use log::{error, debug};
 use sqlx::PgPool;
-
-fn handle_db_error(err: sqlx::Error) -> HttpResponse {
-    error!("Error en la base de datos: {}", err);
-    HttpResponse::InternalServerError().json(serde_json::json!({
-        "error": "Error en la base de datos",
-        "message": err.to_string()
-    }))
-}
+use crate::error::error::handle_db_error;
 
 #[get("/assignmentsProx")]
 async fn get_assignments_prox(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
@@ -20,7 +13,6 @@ async fn get_assignments_prox(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Res
 
     match assingments {
         Ok(data) => HttpResponse::Ok().json(data),
-        // Ok(None) => HttpResponse::NotFound().body("No se encontaron asignaciones pendientes"),
         Err(err) => handle_db_error(err),
     }
 }

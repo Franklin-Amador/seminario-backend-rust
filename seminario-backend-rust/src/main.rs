@@ -2,6 +2,7 @@ mod config;
 mod handlers;
 mod models;
 mod routes;
+mod error;
 
 use actix_web::{web, App, HttpServer};
 use dotenvy::dotenv;
@@ -82,7 +83,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .configure(routes::config_routes)
     })
-    .bind("0.0.0.0:8080")?
+    .bind("127.0.0.1:8080")?
     .run()
     .await
 }

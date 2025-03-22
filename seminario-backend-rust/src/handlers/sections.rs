@@ -3,14 +3,7 @@ use sqlx::{Pool, Postgres};
 use log::{error, debug};
 use sqlx::PgPool;
 use crate::models::sections::{CreateSectionDto, Sections, UpdateSectionDto};
-
-fn handle_db_error(err: sqlx::Error) -> HttpResponse {
-    error!("Error en la base de datos: {}", err);
-    HttpResponse::InternalServerError().json(serde_json::json!({
-        "error": "Error en la base de datos",
-        "message": err.to_string()
-    }))
-}
+use crate::error::error::handle_db_error;
 
 #[get("/secciones")]
 async fn get_secciones(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
