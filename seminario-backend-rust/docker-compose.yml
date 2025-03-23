@@ -43,6 +43,14 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    depends_on:
+      - pushgateway
+
+  pushgateway:
+    image: prom/pushgateway
+    container_name: prometheus_pushgateway
+    ports:
+      - "9091:9091"
 
   grafana:
     image: grafana/grafana:latest
@@ -56,14 +64,19 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
 
   k6:
-    image: grafana/k6
+    build:
+      context: .
+      dockerfile: Dockerfile.k6
     container_name: k6
     volumes:
       - ./tests:/tests
     entrypoint: ["k6"]
-    command: ["run", "/tests/test_script.js"]
+    command: ["run", "--out=prometheus-remote", "/tests/test_script.js"]
     depends_on:
       - rust_api
+      - prometheus
+    environment:
+      K6_PROMETHEUS_REMOTE_URL: "http://prometheus:9090/api/v1/write"
 
 volumes:
   postgres_data:
