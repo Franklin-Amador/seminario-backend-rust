@@ -1,0 +1,7 @@
+FROM grafana/k6:latest
+USER root
+RUN apk --no-cache add wget
+RUN wget -O /tmp/k6-prometheus.tar.gz https://github.com/grafana/xk6-output-prometheus-remote/releases/download/v0.3.0/xk6-output-prometheus-remote_v0.3.0_linux_amd64.tar.gz \
+    && tar -xzf /tmp/k6-prometheus.tar.gz -C /tmp \
+    && cp /tmp/xk6-output-prometheus-remote /usr/bin/
+USER k6
