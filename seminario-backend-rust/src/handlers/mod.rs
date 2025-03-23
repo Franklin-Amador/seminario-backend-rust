@@ -8,3 +8,4 @@ pub mod home;
 pub mod assignment;
 pub mod sections;
 pub mod submissions;
+pub mod enrollments;

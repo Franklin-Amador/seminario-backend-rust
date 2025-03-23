@@ -7,3 +7,4 @@ pub mod rol;
 pub mod sections;
 pub mod assignment;
 pub mod submissions;
+pub mod enrollments;

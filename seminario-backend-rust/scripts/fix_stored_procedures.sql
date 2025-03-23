@@ -220,3 +220,51 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION public.create_submission(
+	p_assignment integer,
+	p_userid integer,
+	p_timecreated timestamp without time zone,
+	p_timemodified timestamp without time zone,
+	p_status text,
+	p_groupid integer,
+	p_attemptnumber integer,
+	p_latest boolean)
+    RETURNS SETOF mdl_assign_submission 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+DECLARE
+    v_now TIMESTAMP := NOW();
+BEGIN
+    RETURN QUERY
+    INSERT INTO mdl_assign_submission(
+        assignment,
+        userid,
+        timecreated,
+        timemodified,
+        status,
+        groupid,
+        attemptnumber,
+        latest
+    )
+    VALUES (
+        p_assignment,
+        p_userid,
+        v_now,
+        p_timemodified,
+        p_status,
+        p_groupid,
+        p_attemptnumber,
+        p_latest
+    )
+    RETURNING *;
+END;
+$BODY$;
+
+ALTER FUNCTION public.create_submission(integer, integer, timestamp without time zone, timestamp without time zone, text, integer, integer, boolean)
+    OWNER TO postgres;

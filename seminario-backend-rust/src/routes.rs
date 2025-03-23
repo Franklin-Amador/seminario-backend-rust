@@ -1,5 +1,5 @@
 use actix_web::web;
-use crate::handlers::{assignment, categories, courses, home, roles, sections, submissions, users};
+use crate::handlers::{assignment, categories, courses, enrollments, home, roles, sections, submissions, users};
 
 // para cada handler se ocupa un service por separado, no permite varios en una sola por tema de metodos http, ignoren el factory
 
@@ -24,5 +24,10 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
        .service(submissions::get_submissions_by_user)
        .service(submissions::create_submission)
        .service(submissions::delete_submission)
+       .service(enrollments::get_enrollments_by_course)
+       .service(enrollments::get_enrollments_by_user)
+       .service(enrollments::create_enrollments)
+       .service(enrollments::delete_enrollment)
+       .service(enrollments::update_enrollment)
        .service(roles::get_rol);
 }
