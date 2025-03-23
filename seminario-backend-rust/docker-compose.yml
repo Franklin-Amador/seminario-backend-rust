@@ -52,6 +52,14 @@ services:
     ports:
       - "9091:9091"
 
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -59,24 +67,21 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+      - influxdb
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
 
   k6:
-    build:
-      context: .
-      dockerfile: Dockerfile.k6
+    image: grafana/k6:latest
     container_name: k6
     volumes:
       - ./tests:/tests
     entrypoint: ["k6"]
-    command: ["run", "--out=prometheus-remote", "/tests/test_script.js"]
+    command: ["run", "--out=influxdb=http://influxdb:8086/k6", "/tests/test_script.js"]
     depends_on:
       - rust_api
-      - prometheus
-    environment:
-      K6_PROMETHEUS_REMOTE_URL: "http://prometheus:9090/api/v1/write"
+      - influxdb
 
 volumes:
   postgres_data:
