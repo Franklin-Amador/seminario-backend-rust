@@ -1,39 +1,55 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Trend } from 'k6/metrics';
+import { sleep } from 'k6';
 
 // Definir métricas personalizadas
-let responseTimeTrendUsers = new Trend('response_time_users');  // Métrica para el endpoint /users
-let responseTimeTrendCategories = new Trend('response_time_categories');  // Métrica para el endpoint /categories
-let responseTimeTrendCombined = new Trend('response_time_combined');  // Métrica combinada para ambos endpoints
+let responseTimeTrendUsers = new Trend('response_time_users');
+let responseTimeTrendCategories = new Trend('response_time_categories');
+let responseTimeTrendCombined = new Trend('response_time_combined');
 
-// Definir opciones de carga
+// Obtener parámetros de variables de entorno o usar valores predeterminados
+const MAX_VUS = __ENV.MAX_VUS ? parseInt(__ENV.MAX_VUS) : 20;
+const DURATION = __ENV.DURATION || '30s';
+const RAMP_UP = __ENV.RAMP_UP || '10s';
+
+// Configuración dinámica basada en parámetros
 export let options = {
-  vus: 20,        // Número de usuarios virtuales
-  duration: '30s', // Duración de la prueba
+  stages: [
+    { duration: RAMP_UP, target: MAX_VUS }, // Incremento gradual hasta MAX_VUS
+    { duration: DURATION, target: MAX_VUS }, // Mantener MAX_VUS durante DURATION
+    { duration: '10s', target: 0 }, // Reducción gradual
+  ],
+  
+  thresholds: {
+    http_req_duration: ['p(95)<500'], // Falla si el 95% de las solicitudes tardan más de 500ms
+    'http_req_duration{type:users}': ['p(95)<400'],
+    'http_req_duration{type:categories}': ['p(95)<300'],
+  },
 };
 
 export default function () {
-  // Hacer una solicitud GET a /users
-  let res = http.get('http://rust_api:8080/users'); // Cambia esto por la URL correcta
-  let cat = http.get('http://rust_api:8080/categories'); // Cambia esto por la URL correcta 
-
-  // Verificar que la respuesta sea 200 OK para ambos endpoints
-  check(res, {
+  // Grupo de usuarios para mejor organización de métricas
+  let responses = http.batch([
+    ['GET', 'http://rust_api:8080/users', null, { tags: { type: 'users' } }],
+    ['GET', 'http://rust_api:8080/categories', null, { tags: { type: 'categories' } }]
+  ]);
+  
+  // Verificaciones de estado
+  check(responses[0], {
     'users endpoint is status 200': (r) => r.status === 200,
   });
-
-  check(cat, {
+  
+  check(responses[1], {
     'categories endpoint is status 200': (r) => r.status === 200,
   });
-
-  // Registrar la métrica de tiempo de respuesta para el endpoint /users
-  responseTimeTrendUsers.add(res.timings.duration);
-
-  // Registrar la métrica de tiempo de respuesta para el endpoint /categories
-  responseTimeTrendCategories.add(cat.timings.duration);
-
-  // Registrar la métrica combinada de tiempo de respuesta (ambos endpoints)
-  responseTimeTrendCombined.add(res.timings.duration);
-  responseTimeTrendCombined.add(cat.timings.duration);
+  
+  // Registrar métricas de tiempo de respuesta
+  responseTimeTrendUsers.add(responses[0].timings.duration);
+  responseTimeTrendCategories.add(responses[1].timings.duration);
+  responseTimeTrendCombined.add(responses[0].timings.duration);
+  responseTimeTrendCombined.add(responses[1].timings.duration);
+  
+  // Pequeña pausa para simular comportamiento de usuario real
+  sleep(0.1);
 }

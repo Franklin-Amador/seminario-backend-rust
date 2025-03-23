@@ -1,8 +1,12 @@
 version: '3.8'
 
+x-build-args: &build-args
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
 services:
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: campus_virtual_db
     restart: always
     environment:
@@ -23,7 +27,10 @@ services:
       start_period: 30s
 
   rust_api:
-    build: .
+    build:
+      context: .
+      args:
+        <<: *build-args
     container_name: rust_backend
     restart: on-failure
     depends_on:
@@ -47,7 +54,7 @@ services:
       - pushgateway
 
   pushgateway:
-    image: prom/pushgateway
+    image: prom/pushgateway:latest
     container_name: prometheus_pushgateway
     ports:
       - "9091:9091"
@@ -82,6 +89,10 @@ services:
     depends_on:
       - rust_api
       - influxdb
+    environment:
+    - MAX_VUS=${MAX_VUS:-20}
+    - DURATION=${DURATION:-30s}
+    - RAMP_UP=${RAMP_UP:-10s}
 
 volumes:
   postgres_data:

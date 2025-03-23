@@ -6,7 +6,7 @@ RUN rustup update stable
 # Creamos el directorio de trabajo
 WORKDIR /app
 
-# Copiamos todo el código fuente primero
+# Copiamos todo el código fuente
 COPY . .
 
 # Compilamos el proyecto en modo release
@@ -17,13 +17,13 @@ RUN ls -la /app/target/release/
 RUN chmod +x /app/target/release/seminario-backend-rust
 
 # Usamos una imagen más ligera para ejecutar
-FROM debian:bullseye
+FROM debian:bullseye-slim
 
-# Instalamos las dependencias necesarias
+# Instalamos solo las dependencias necesarias
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     postgresql-client \
-    netcat \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Definimos el directorio de trabajo
