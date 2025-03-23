@@ -6,3 +6,4 @@ pub mod course;
 pub mod rol;
 pub mod sections;
 pub mod assignment;
+pub mod submissions;
