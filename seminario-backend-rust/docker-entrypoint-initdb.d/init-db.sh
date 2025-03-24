@@ -4,11 +4,11 @@ set -e
 echo "🚀 Iniciando configuración automatizada de la base de datos..."
 
 # Leer el contenido de los archivos SQL
-MIGRATION_SQL="$(cat /seminario-backend-rust/scripts/migration.sql)"
-STORED_PROCEDURES_SQL="$(cat /seminario-backend-rust/scripts/stored_procedures.sql)"
-FIX_PROCEDURES_SQL="$(cat /seminario-backend-rust/scripts/fix_stored_procedures.sql)"
-INDEXES_SQL="$(cat /seminario-backend-rust/scripts/indexes.sql)"
-INIT_DATA_SQL="$(cat /seminario-backend-rust/scripts/init.sql)"
+MIGRATION_SQL="$(cat /scripts/migration.sql)"
+STORED_PROCEDURES_SQL="$(cat /scripts/stored_procedures.sql)"
+FIX_PROCEDURES_SQL="$(cat /scripts/fix_stored_procedures.sql)"
+INDEXES_SQL="$(cat /scripts/indexes.sql)"
+INIT_DATA_SQL="$(cat /scripts/init.sql)"
 
 # Ejecutar scripts SQL en orden usando psql
 echo "1️⃣ Creando tablas (migration.sql)..."
