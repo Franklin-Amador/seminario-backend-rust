@@ -10,6 +10,9 @@ use std::env;
 use actix_web_prom::PrometheusMetricsBuilder;
 use tracing::info;
 use tracing_subscriber;
+use sqlx::{PgPool, Executor};
+use std::fs;
+use std::path::Path;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -67,6 +70,17 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
+    //ejecutar los scripts
+    info!("🔄 Ejecutando scripts SQL iniciales...");
+    execute_sql_scripts(&pool).await.map_err(|e| {
+        tracing::error!("❌ Error ejecutando scripts SQL: {}", e);
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Error ejecutando scripts SQL: {}", e),
+        )
+    })?;
+    info!("✅ Scripts SQL ejecutados correctamente");
+
     // Inicializar middleware de métricas Prometheus
     let prometheus = PrometheusMetricsBuilder::new("api")
         .endpoint("/metrics") // Ruta donde se exponen las métricas
@@ -86,4 +100,94 @@ async fn main() -> std::io::Result<()> {
     .bind("0.0.0.0:8080")? // esto cambienlo manual, para el despliegue es necesario :v
     .run()
     .await
+}
+
+
+async fn execute_sql_scripts(pool: &PgPool) -> Result<(), sqlx::Error> {
+    let scripts = [
+        "docker-entrypoint-initdb.d/01-migration.sql",
+        "docker-entrypoint-initdb.d/02-stored_procedures.sql",
+        "docker-entrypoint-initdb.d/03-fix_stored_procedures.sql",
+        "docker-entrypoint-initdb.d/04-indexes.sql",
+        "docker-entrypoint-initdb.d/05-init.sql",
+    ];
+
+    let is_dev = env::var("APP_ENV").unwrap_or_default() == "development";
+
+    if is_dev {
+        info!("🧹 Modo desarrollo: limpiando base de datos...");
+        clean_database(pool).await?;
+    } else {
+        let db_initialized: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' LIMIT 1)"
+        )
+        .fetch_one(pool)
+        .await?;
+
+        if db_initialized {
+            info!("✅ La base de datos ya está inicializada, omitiendo scripts");
+            return Ok(());
+        }
+    }
+
+    for script_path in scripts.iter() {
+        info!("📜 Ejecutando script: {}", script_path);
+        
+        if !Path::new(script_path).exists() {
+            tracing::warn!("⚠️ Script no encontrado: {}", script_path);
+            continue;
+        }
+
+        let content = fs::read_to_string(script_path)?;
+        
+        let mut transaction = pool.begin().await?;
+        
+        if let Err(e) = transaction.execute(content.as_str()).await {
+            // Ignorar errores de "ya existe" en modo desarrollo
+            if is_dev && e.to_string().contains("already exists") {
+                info!("⚠️ Ignorando error (modo desarrollo): {}", e);
+                continue;
+            }
+            return Err(e);
+        }
+        
+        transaction.commit().await?;
+    }
+
+    Ok(())
+}
+
+async fn clean_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query("SET session_replication_role = 'replica'")
+        .execute(pool)
+        .await?;
+
+    let tables: Vec<String> = sqlx::query_scalar(
+        "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+    )
+    .fetch_all(pool)
+    .await?;
+
+    for table in tables {
+        let query = format!("DROP TABLE IF EXISTS {} CASCADE", table);
+        sqlx::query(&query).execute(pool).await?;
+    }
+
+    let functions: Vec<String> = sqlx::query_scalar(
+        "SELECT routine_name FROM information_schema.routines 
+         WHERE routine_schema = 'public' AND routine_type = 'FUNCTION'"
+    )
+    .fetch_all(pool)
+    .await?;
+
+    for function in functions {
+        let query = format!("DROP FUNCTION IF EXISTS {} CASCADE", function);
+        sqlx::query(&query).execute(pool).await?;
+    }
+
+    sqlx::query("SET session_replication_role = 'origin'")
+        .execute(pool)
+        .await?;
+
+    Ok(())
 }

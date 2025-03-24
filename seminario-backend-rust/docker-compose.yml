@@ -4,38 +4,41 @@ services:
   db:
     image: postgres:16
     container_name: campus_virtual_db
-    restart: always
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: campus_virtual
+      # Añadir esta variable para asegurar ejecución
+      POSTGRES_INITDB_ARGS: "--data-checksums"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts:/scripts
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
-    command: ["bash", "/docker-entrypoint-initdb.d/init-db.sh"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d campus_virtual && psql -U admin -d campus_virtual -c \"SELECT COUNT(*) FROM pg_proc WHERE proname = 'get_all_users';\" | grep -q 1"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U admin -d campus_virtual"]
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 30s
+    # Añadir esta configuración para manejar mejor los scripts
+    restart: unless-stopped
 
   rust_api:
     build: .
     container_name: rust_backend
-    restart: on-failure
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://admin:admin123@db:5432/campus_virtual
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      DB_NAME: campus_virtual
       RUST_LOG: debug
-      RUST_BACKTRACE: 1
     ports:
       - "8080:8080"
+    volumes:
+      - ./docker-entrypoint-initdb.d:/app/docker-entrypoint-initdb.d
 
   prometheus:
     image: prom/prometheus:latest

@@ -1,49 +1,34 @@
 #!/bin/bash
+
 set -e
 
-echo "🚀 Iniciando configuración automatizada de la base de datos..."
+echo "Iniciando proceso de inicialización de la base de datos..."
 
-# Leer el contenido de los archivos SQL
-MIGRATION_SQL="$(cat /scripts/migration.sql)"
-STORED_PROCEDURES_SQL="$(cat /scripts/stored_procedures.sql)"
-FIX_PROCEDURES_SQL="$(cat /scripts/fix_stored_procedures.sql)"
-INDEXES_SQL="$(cat /scripts/indexes.sql)"
-INIT_DATA_SQL="$(cat /scripts/init.sql)"
+# Función para ejecutar scripts SQL
+execute_script() {
+    local script="$1"
+    echo "Ejecutando script: $(basename "$script")"
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$script"
+}
 
-# Ejecutar scripts SQL en orden usando psql
-echo "1️⃣ Creando tablas (migration.sql)..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
-$MIGRATION_SQL
-EOSQL
-
-echo "2️⃣ Creando procedimientos almacenados (stored_procedures.sql)..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
-$STORED_PROCEDURES_SQL
-EOSQL
-
-echo "3️⃣ Aplicando correcciones a procedimientos (fix_stored_procedures.sql)..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
-$FIX_PROCEDURES_SQL
-EOSQL
-
-echo "4️⃣ Creando índices (indexes.sql)..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
-$INDEXES_SQL
-EOSQL
-
-echo "5️⃣ Cargando datos iniciales (init.sql)..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
-$INIT_DATA_SQL
-EOSQL
-
-# Verificación final
-echo "🔍 Verificando que los procedimientos se crearon correctamente..."
-USERS_PROC_COUNT=$(psql -t --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -c "SELECT COUNT(*) FROM pg_proc WHERE proname = 'get_all_users';")
-if [ "$USERS_PROC_COUNT" -ge 1 ]; then
-    echo "✅ Procedimiento get_all_users() encontrado."
+# Verificar si es necesario ejecutar los scripts
+if [ -f /var/lib/postgresql/data/PG_VERSION ]; then
+    echo "La base de datos ya existe, verificando procedimientos almacenados..."
+    
+    # Verificar si los procedimientos existen
+    if ! psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1 FROM pg_proc WHERE proname = 'get_sections'" | grep -q 1; then
+        echo "Procedimientos almacenados no encontrados, ejecutando scripts..."
+        for script in /docker-entrypoint-initdb.d/*.sql; do
+            execute_script "$script"
+        done
+    else
+        echo "La base de datos ya está completamente inicializada"
+    fi
 else
-    echo "❌ ERROR: Procedimiento get_all_users() no encontrado."
-    exit 1
+    echo "Inicializando nueva base de datos..."
+    for script in /docker-entrypoint-initdb.d/*.sql; do
+        execute_script "$script"
+    done
 fi
 
-echo "✅ ¡Base de datos inicializada correctamente!"
+echo "Inicialización completada"
