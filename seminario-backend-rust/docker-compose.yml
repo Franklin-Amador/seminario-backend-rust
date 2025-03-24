@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: campus_virtual
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts:/scripts-source
+      - ./scripts:/scripts
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
