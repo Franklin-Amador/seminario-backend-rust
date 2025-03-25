@@ -267,4 +267,4 @@ END;
 $BODY$;
 
 ALTER FUNCTION public.create_submission(integer, integer, timestamp without time zone, timestamp without time zone, text, integer, integer, boolean)
-    OWNER TO postgres;
+    OWNER TO admin;

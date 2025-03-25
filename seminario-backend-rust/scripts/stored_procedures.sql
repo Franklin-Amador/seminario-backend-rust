@@ -659,7 +659,7 @@ END;
 $BODY$;
 
 ALTER FUNCTION public.create_assignment(integer, text, text, integer, text, text, integer)
-    OWNER TO postgres;
+    OWNER TO admin;
 
 -- Actualizar una asignación
 -- CREATE OR REPLACE FUNCTION update_assignment(
@@ -782,7 +782,7 @@ END;
 $BODY$;
 
 ALTER FUNCTION public.get_sections()
-    OWNER TO postgres;
+    OWNER TO admin;
 
 -- =============================================
 -- Procedimientos para envíos (submissions)
