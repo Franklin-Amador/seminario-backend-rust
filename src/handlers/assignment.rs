@@ -34,6 +34,42 @@ async fn get_assigments_by_curso(pool: web::Data<Pool<sqlx::Postgres>>, path: we
     }
 }
 
+#[get("/seccionAssignments/{id_curso}/{id_seccion}")]
+async fn get_assigments_by_seccion(
+    pool: web::Data<Pool<sqlx::Postgres>>,
+    path: web::Path<(i32, i32)>,
+) -> impl Responder {
+    let (id_curso, id_seccion) = path.into_inner();
+    let assignments: Result<Vec<Assignment>, sqlx::Error> = sqlx::query_as::<_, Assignment>(
+        "SELECT * FROM get_assignments_by_course_section($1, $2)"
+    )
+    .bind(id_curso)
+    .bind(id_seccion)
+    .fetch_all(pool.get_ref())
+    .await;
+
+    match assignments {
+        Ok(data) if !data.is_empty() => HttpResponse::Ok().json(data),
+        Ok(_) => HttpResponse::NotFound().body("No se encontraron asignaciones para esta seccion del curso"),
+        Err(err) => handle_db_error(err),
+    }
+}
+
+#[get("/allAssignments")]
+async fn get_all_assignments(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
+    let assignments: Result<Vec<Assignment>, sqlx::Error> = sqlx::query_as::<_, Assignment>(
+        "SELECT * FROM get_all_assignments()"
+    )
+    .fetch_all(pool.get_ref())
+    .await;
+
+    match assignments {
+        Ok(data) if !data.is_empty() => HttpResponse::Ok().json(data),
+        Ok(_) => HttpResponse::NotFound().body("No se encontraron asignaciones"),
+        Err(err) => handle_db_error(err),
+    }
+}
+
 #[get("/assignments/{id}")]
 pub async fn get_assignment_by_id(
     pool: web::Data<Pool<Postgres>>, 
