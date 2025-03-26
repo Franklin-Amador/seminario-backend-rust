@@ -15,7 +15,7 @@ env:
   PGPORT: 5432
 
 jobs:
-  test_seminario:
+  test:
     runs-on: ubuntu-latest
     services:
       postgres:
