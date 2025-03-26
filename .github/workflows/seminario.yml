@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: seminario-rust
 
 on:
   push:
@@ -15,7 +15,7 @@ env:
   PGPORT: 5432
 
 jobs:
-  test:
+  test_seminario:
     runs-on: ubuntu-latest
     services:
       postgres:

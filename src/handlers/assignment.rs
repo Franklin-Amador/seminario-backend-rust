@@ -1,13 +1,18 @@
-use actix_web::{post, get,put, delete, web, HttpResponse, Responder};
-use sqlx::{Pool, Postgres};
-use crate::models::assignment::{Assignment, AssignmentsProx, CreateAssignmentDto, UpdateAssignmentDto};
-use log::{error, debug};
-use sqlx::PgPool;
 use crate::error::error::handle_db_error;
+use crate::models::assignment::{
+    Assignment, AssignmentsProx, CreateAssignmentDto, UpdateAssignmentDto,
+};
+use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use log::{debug, error};
+use sqlx::PgPool;
+use sqlx::{Pool, Postgres};
 
 #[get("/assignmentsProx")]
 async fn get_assignments_prox(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
-    let assingments: Result<Vec<AssignmentsProx>, sqlx::Error> = sqlx::query_as::<_, AssignmentsProx>("SELECT id, name, duedate FROM get_upcoming_assignments()")
+    let assingments: Result<Vec<AssignmentsProx>, sqlx::Error> = 
+        sqlx::query_as::<_, AssignmentsProx>(
+            "SELECT id, name, duedate FROM get_upcoming_assignments()",
+        )
         .fetch_all(pool.get_ref())
         .await;
 
