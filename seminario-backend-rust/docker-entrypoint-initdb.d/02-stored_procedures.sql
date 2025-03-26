@@ -547,52 +547,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Crear una asignación
--- CREATE OR REPLACE FUNCTION create_assignment(
---     p_course INTEGER,
---     p_name TEXT,
---     p_intro TEXT,
---     p_section INTEGER,
---     p_duedate TIMESTAMP,
---     p_allowsubmissionsfromdate TIMESTAMP,
---     p_grade INTEGER
--- )
--- RETURNS SETOF mdl_assign AS $$
--- BEGIN
---     RETURN QUERY
---     INSERT INTO mdl_assign(
---         course,
---         name,
---         intro,
---         section,
---         duedate,
---         allowsubmissionsfromdate,
---         grade,
---         introformat,
---         timemodified
---     )
---     VALUES (
---         p_course,
---         p_name,
---         p_intro,
---         p_section,
---         p_duedate,
---         p_allowsubmissionsfromdate,
---         p_grade,
---         1, -- introformat
---         NOW() -- timemodified
---     )
---     RETURNING *;
--- END;
--- $$ LANGUAGE plpgsql;
-
-
 CREATE OR REPLACE FUNCTION public.create_assignment(
     p_course integer,
     p_name text,
     p_intro text,
     p_section integer,
-    p_duedate text,
-    p_allowsubmissionsfromdate text,
+    p_duedate timestamp without time zone,
+    p_allowsubmissionsfromdate timestamp without time zone,
     p_grade integer)
     RETURNS SETOF mdl_assign 
     LANGUAGE 'plpgsql'
@@ -600,9 +561,6 @@ CREATE OR REPLACE FUNCTION public.create_assignment(
     VOLATILE PARALLEL UNSAFE
     ROWS 1000
 AS $BODY$
-DECLARE
-    v_duedate timestamp without time zone;
-    v_allowsubmissionsfromdate timestamp without time zone;
 BEGIN
     -- Validaciones
     IF p_name IS NULL OR p_name = '' THEN
@@ -613,24 +571,7 @@ BEGIN
         RAISE EXCEPTION 'El ID del curso debe ser un número positivo';
     END IF;
     
-    -- Convertir fechas con manejo de errores
-    BEGIN
-        IF p_duedate IS NOT NULL THEN
-            v_duedate := p_duedate::timestamp without time zone;
-        END IF;
-    EXCEPTION WHEN OTHERS THEN
-        RAISE EXCEPTION 'Formato de fecha inválido para duedate: %', p_duedate;
-    END;
-    
-    BEGIN
-        IF p_allowsubmissionsfromdate IS NOT NULL THEN
-            v_allowsubmissionsfromdate := p_allowsubmissionsfromdate::timestamp without time zone;
-        END IF;
-    EXCEPTION WHEN OTHERS THEN
-        RAISE EXCEPTION 'Formato de fecha inválido para allowsubmissionsfromdate: %', p_allowsubmissionsfromdate;
-    END;
-    
-    -- Insertar registro
+    -- Insertar registro (ya no necesitamos conversión de fechas)
     RETURN QUERY
     INSERT INTO mdl_assign(
         course,
@@ -648,8 +589,8 @@ BEGIN
         p_name,
         p_intro,
         p_section,
-        v_duedate,
-        v_allowsubmissionsfromdate,
+        p_duedate,  -- Usamos el timestamp directamente
+        p_allowsubmissionsfromdate,  -- Usamos el timestamp directamente
         p_grade,
         1, -- introformat
         NOW() -- timemodified
@@ -658,55 +599,103 @@ BEGIN
 END;
 $BODY$;
 
-ALTER FUNCTION public.create_assignment(integer, text, text, integer, text, text, integer)
+ALTER FUNCTION public.create_assignment(integer, text, text, integer, timestamp without time zone, timestamp without time zone, integer)
     OWNER TO admin;
 
--- Actualizar una asignación
--- CREATE OR REPLACE FUNCTION update_assignment(
---     p_assignment_id INTEGER,
---     p_name TEXT,
---     p_intro TEXT,
---     p_section INTEGER,
---     p_duedate TIMESTAMP,
---     p_allowsubmissionsfromdate TIMESTAMP,
---     p_grade INTEGER
--- )
--- RETURNS SETOF mdl_assign AS $$
+
+-- CREATE OR REPLACE FUNCTION public.create_assignment(
+--     p_course integer,
+--     p_name text,
+--     p_intro text,
+--     p_section integer,
+--     p_duedate text,
+--     p_allowsubmissionsfromdate text,
+--     p_grade integer)
+--     RETURNS SETOF mdl_assign 
+--     LANGUAGE 'plpgsql'
+--     COST 100
+--     VOLATILE PARALLEL UNSAFE
+--     ROWS 1000
+-- AS $BODY$
+-- DECLARE
+--     v_duedate timestamp without time zone;
+--     v_allowsubmissionsfromdate timestamp without time zone;
 -- BEGIN
+--     -- Validaciones
+--     IF p_name IS NULL OR p_name = '' THEN
+--         RAISE EXCEPTION 'El nombre de la asignación no puede estar vacío';
+--     END IF;
+    
+--     IF p_course <= 0 THEN
+--         RAISE EXCEPTION 'El ID del curso debe ser un número positivo';
+--     END IF;
+    
+--     -- Convertir fechas con manejo de errores
+--     BEGIN
+--         IF p_duedate IS NOT NULL THEN
+--             v_duedate := p_duedate::timestamp without time zone;
+--         END IF;
+--     EXCEPTION WHEN OTHERS THEN
+--         RAISE EXCEPTION 'Formato de fecha inválido para duedate: %', p_duedate;
+--     END;
+    
+--     BEGIN
+--         IF p_allowsubmissionsfromdate IS NOT NULL THEN
+--             v_allowsubmissionsfromdate := p_allowsubmissionsfromdate::timestamp without time zone;
+--         END IF;
+--     EXCEPTION WHEN OTHERS THEN
+--         RAISE EXCEPTION 'Formato de fecha inválido para allowsubmissionsfromdate: %', p_allowsubmissionsfromdate;
+--     END;
+    
+--     -- Insertar registro
 --     RETURN QUERY
---     UPDATE mdl_assign
---     SET name = p_name,
---         intro = p_intro,
---         section = p_section,
---         duedate = p_duedate,
---         allowsubmissionsfromdate = p_allowsubmissionsfromdate,
---         grade = p_grade,
---         timemodified = NOW()
---     WHERE id = p_assignment_id
+--     INSERT INTO mdl_assign(
+--         course,
+--         name,
+--         intro,
+--         section,
+--         duedate,
+--         allowsubmissionsfromdate,
+--         grade,
+--         introformat,
+--         timemodified
+--     )
+--     VALUES (
+--         p_course,
+--         p_name,
+--         p_intro,
+--         p_section,
+--         v_duedate,
+--         v_allowsubmissionsfromdate,
+--         p_grade,
+--         1, -- introformat
+--         NOW() -- timemodified
+--     )
 --     RETURNING *;
 -- END;
--- $$ LANGUAGE plpgsql;
+-- $BODY$;
 
+-- ALTER FUNCTION public.create_assignment(integer, text, text, integer, text, text, integer)
+--     OWNER TO admin;
 
+-- Actualizar una asignación
 CREATE OR REPLACE FUNCTION public.update_assignment(
     p_id integer,
     p_name text DEFAULT NULL,
     p_intro text DEFAULT NULL,
     p_section integer DEFAULT NULL,
-    p_duedate text DEFAULT NULL,
-    p_allowsubmissionsfromdate text DEFAULT NULL,
+    p_duedate timestamp without time zone DEFAULT NULL,
+    p_allowsubmissionsfromdate timestamp without time zone DEFAULT NULL,
     p_grade integer DEFAULT NULL,
-    -- Añadir aquí el resto de campos que se pueden actualizar
     p_alwaysshowdescription boolean DEFAULT NULL,
-    p_nosubmissions boolean DEFAULT NULL
-    -- etc.
-)
-RETURNS SETOF mdl_assign 
-LANGUAGE 'plpgsql'
+    p_nosubmissions boolean DEFAULT NULL)
+    RETURNS SETOF mdl_assign 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
 AS $BODY$
 DECLARE
-    v_duedate timestamp without time zone;
-    v_allowsubmissionsfromdate timestamp without time zone;
     v_update_parts text := '';
 BEGIN
     -- Verificar si la asignación existe
@@ -727,26 +716,26 @@ BEGIN
         v_update_parts := v_update_parts || ', section = ' || p_section;
     END IF;
     
-    -- Manejar fechas con conversión
+    -- Manejar fechas directamente (sin conversión)
     IF p_duedate IS NOT NULL THEN
-        BEGIN
-            v_duedate := p_duedate::timestamp without time zone;
-            v_update_parts := v_update_parts || ', duedate = ' || quote_literal(v_duedate);
-        EXCEPTION WHEN OTHERS THEN
-            RAISE EXCEPTION 'Formato de fecha inválido para duedate: %', p_duedate;
-        END;
+        v_update_parts := v_update_parts || ', duedate = ' || quote_literal(p_duedate);
     END IF;
     
     IF p_allowsubmissionsfromdate IS NOT NULL THEN
-        BEGIN
-            v_allowsubmissionsfromdate := p_allowsubmissionsfromdate::timestamp without time zone;
-            v_update_parts := v_update_parts || ', allowsubmissionsfromdate = ' || quote_literal(v_allowsubmissionsfromdate);
-        EXCEPTION WHEN OTHERS THEN
-            RAISE EXCEPTION 'Formato de fecha inválido para allowsubmissionsfromdate: %', p_allowsubmissionsfromdate;
-        END;
+        v_update_parts := v_update_parts || ', allowsubmissionsfromdate = ' || quote_literal(p_allowsubmissionsfromdate);
     END IF;
     
-    -- Manejar el resto de campos aquí...
+    IF p_grade IS NOT NULL THEN
+        v_update_parts := v_update_parts || ', grade = ' || p_grade;
+    END IF;
+    
+    IF p_alwaysshowdescription IS NOT NULL THEN
+        v_update_parts := v_update_parts || ', alwaysshowdescription = ' || p_alwaysshowdescription;
+    END IF;
+    
+    IF p_nosubmissions IS NOT NULL THEN
+        v_update_parts := v_update_parts || ', nosubmissions = ' || p_nosubmissions;
+    END IF;
     
     -- Si no hay nada que actualizar, salir
     IF v_update_parts = '' THEN
@@ -761,6 +750,87 @@ BEGIN
     RETURN QUERY EXECUTE 'UPDATE mdl_assign SET ' || v_update_parts || ' WHERE id = ' || p_id || ' RETURNING *';
 END;
 $BODY$;
+
+ALTER FUNCTION public.update_assignment(
+    integer, text, text, integer, 
+    timestamp without time zone, timestamp without time zone, 
+    integer, boolean, boolean)
+    OWNER TO admin;
+
+
+-- CREATE OR REPLACE FUNCTION public.update_assignment(
+--     p_id integer,
+--     p_name text DEFAULT NULL,
+--     p_intro text DEFAULT NULL,
+--     p_section integer DEFAULT NULL,
+--     p_duedate text DEFAULT NULL,
+--     p_allowsubmissionsfromdate text DEFAULT NULL,
+--     p_grade integer DEFAULT NULL,
+--     -- Añadir aquí el resto de campos que se pueden actualizar
+--     p_alwaysshowdescription boolean DEFAULT NULL,
+--     p_nosubmissions boolean DEFAULT NULL
+--     -- etc.
+-- )
+-- RETURNS SETOF mdl_assign 
+-- LANGUAGE 'plpgsql'
+-- AS $BODY$
+-- DECLARE
+--     v_duedate timestamp without time zone;
+--     v_allowsubmissionsfromdate timestamp without time zone;
+--     v_update_parts text := '';
+-- BEGIN
+--     -- Verificar si la asignación existe
+--     IF NOT EXISTS (SELECT 1 FROM mdl_assign WHERE id = p_id) THEN
+--         RAISE EXCEPTION 'La asignación con ID % no existe', p_id;
+--     END IF;
+    
+--     -- Preparar las partes de la consulta de actualización
+--     IF p_name IS NOT NULL THEN
+--         v_update_parts := v_update_parts || ', name = ' || quote_literal(p_name);
+--     END IF;
+    
+--     IF p_intro IS NOT NULL THEN
+--         v_update_parts := v_update_parts || ', intro = ' || quote_literal(p_intro);
+--     END IF;
+    
+--     IF p_section IS NOT NULL THEN
+--         v_update_parts := v_update_parts || ', section = ' || p_section;
+--     END IF;
+    
+--     -- Manejar fechas con conversión
+--     IF p_duedate IS NOT NULL THEN
+--         BEGIN
+--             v_duedate := p_duedate::timestamp without time zone;
+--             v_update_parts := v_update_parts || ', duedate = ' || quote_literal(v_duedate);
+--         EXCEPTION WHEN OTHERS THEN
+--             RAISE EXCEPTION 'Formato de fecha inválido para duedate: %', p_duedate;
+--         END;
+--     END IF;
+    
+--     IF p_allowsubmissionsfromdate IS NOT NULL THEN
+--         BEGIN
+--             v_allowsubmissionsfromdate := p_allowsubmissionsfromdate::timestamp without time zone;
+--             v_update_parts := v_update_parts || ', allowsubmissionsfromdate = ' || quote_literal(v_allowsubmissionsfromdate);
+--         EXCEPTION WHEN OTHERS THEN
+--             RAISE EXCEPTION 'Formato de fecha inválido para allowsubmissionsfromdate: %', p_allowsubmissionsfromdate;
+--         END;
+--     END IF;
+    
+--     -- Manejar el resto de campos aquí...
+    
+--     -- Si no hay nada que actualizar, salir
+--     IF v_update_parts = '' THEN
+--         RETURN QUERY SELECT * FROM mdl_assign WHERE id = p_id;
+--         RETURN;
+--     END IF;
+    
+--     -- Eliminar la primera coma y agregar la actualización de timemodified
+--     v_update_parts := substring(v_update_parts from 2) || ', timemodified = NOW()';
+    
+--     -- Construir y ejecutar la consulta dinámica
+--     RETURN QUERY EXECUTE 'UPDATE mdl_assign SET ' || v_update_parts || ' WHERE id = ' || p_id || ' RETURNING *';
+-- END;
+-- $BODY$;
 
 
 -- FUNCTION: public.get_sections()

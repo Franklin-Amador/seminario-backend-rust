@@ -7,7 +7,7 @@ use crate::error::error::handle_db_error;
 
 #[get("/assignmentsProx")]
 async fn get_assignments_prox(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
-    let assingments: Result<Vec<AssignmentsProx>, sqlx::Error> = sqlx::query_as::<_, AssignmentsProx>("SELECT id, name, duedate::text FROM get_upcoming_assignments()")
+    let assingments: Result<Vec<AssignmentsProx>, sqlx::Error> = sqlx::query_as::<_, AssignmentsProx>("SELECT id, name, duedate FROM get_upcoming_assignments()")
         .fetch_all(pool.get_ref())
         .await;
 
@@ -117,8 +117,8 @@ pub async fn update_assignment(
     .bind(payload.name.as_deref())
     .bind(payload.intro.as_deref())
     .bind(payload.section)
-    .bind(payload.duedate.as_deref()) 
-    .bind(payload.allowsubmissionsfromdate.as_deref()) 
+    .bind(payload.duedate) 
+    .bind(payload.allowsubmissionsfromdate) 
     .bind(payload.grade)
     .bind(payload.alwaysshowdescription)
     .bind(payload.nosubmissions)
