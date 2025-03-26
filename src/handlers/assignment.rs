@@ -17,17 +17,19 @@ async fn get_assignments_prox(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Res
     }
 }
 
-#[get("/cursoAssigments/{id}")]
+#[get("/cursoAssigmentsProx/{id}")]
 async fn get_assigments_by_curso(pool: web::Data<Pool<sqlx::Postgres>>, path: web::Path<i32>) -> impl Responder {
     let id = path.into_inner();
-    let assingments: Result<Option<AssignmentsProx>, sqlx::Error> = sqlx::query_as::<_, AssignmentsProx>("SELECT id, name, duedate FROM mdl_assign WHERE course = $1")
-        .bind(id)
-        .fetch_optional(pool.get_ref())
-        .await;
+    let assignments: Result<Vec<Assignment>, sqlx::Error> = sqlx::query_as::<_, Assignment>(
+        "SELECT * FROM get_upcoming_assignments_by_course($1)"
+    )
+    .bind(id)
+    .fetch_all(pool.get_ref())
+    .await;
 
-    match assingments {
-        Ok(Some(data)) => HttpResponse::Ok().json(data),
-        Ok(None) => HttpResponse::NotFound().body("No se encontaron asignaciones pendientes"),
+    match assignments {
+        Ok(data) if !data.is_empty() => HttpResponse::Ok().json(data),
+        Ok(_) => HttpResponse::NotFound().body("No se encontraron asignaciones pendientes"),
         Err(err) => handle_db_error(err),
     }
 }
