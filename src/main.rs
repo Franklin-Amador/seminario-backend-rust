@@ -1,18 +1,18 @@
 mod config;
+mod error;
 mod handlers;
 mod models;
 mod routes;
-mod error;
 
 use actix_web::{web, App, HttpServer};
-use dotenvy::dotenv;
-use std::env;
 use actix_web_prom::PrometheusMetricsBuilder;
-use tracing::info;
-use tracing_subscriber;
-use sqlx::{PgPool, Executor};
+use dotenvy::dotenv;
+use sqlx::{Executor, PgPool};
+use std::env;
 use std::fs;
 use std::path::Path;
+use tracing::info;
+use tracing_subscriber;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -102,7 +102,6 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-
 async fn execute_sql_scripts(pool: &PgPool) -> Result<(), sqlx::Error> {
     let scripts = [
         "docker-entrypoint-initdb.d/01-migration.sql",
@@ -132,16 +131,16 @@ async fn execute_sql_scripts(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     for script_path in scripts.iter() {
         info!("📜 Ejecutando script: {}", script_path);
-        
+
         if !Path::new(script_path).exists() {
             tracing::warn!("⚠️ Script no encontrado: {}", script_path);
             continue;
         }
 
         let content = fs::read_to_string(script_path)?;
-        
+
         let mut transaction = pool.begin().await?;
-        
+
         if let Err(e) = transaction.execute(content.as_str()).await {
             // Ignorar errores de "ya existe" en modo desarrollo
             if is_dev && e.to_string().contains("already exists") {
@@ -150,7 +149,7 @@ async fn execute_sql_scripts(pool: &PgPool) -> Result<(), sqlx::Error> {
             }
             return Err(e);
         }
-        
+
         transaction.commit().await?;
     }
 
@@ -162,11 +161,10 @@ async fn clean_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
-    let tables: Vec<String> = sqlx::query_scalar(
-        "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
-    )
-    .fetch_all(pool)
-    .await?;
+    let tables: Vec<String> =
+        sqlx::query_scalar("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+            .fetch_all(pool)
+            .await?;
 
     for table in tables {
         let query = format!("DROP TABLE IF EXISTS {} CASCADE", table);
@@ -175,7 +173,7 @@ async fn clean_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     let functions: Vec<String> = sqlx::query_scalar(
         "SELECT routine_name FROM information_schema.routines 
-         WHERE routine_schema = 'public' AND routine_type = 'FUNCTION'"
+         WHERE routine_schema = 'public' AND routine_type = 'FUNCTION'",
     )
     .fetch_all(pool)
     .await?;

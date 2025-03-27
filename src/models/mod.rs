@@ -1,10 +1,10 @@
 // aqui se exportan los modelos
 
-pub mod user;
+pub mod assignment;
 pub mod category;
 pub mod course;
+pub mod enrollments;
 pub mod rol;
 pub mod sections;
-pub mod assignment;
 pub mod submissions;
-pub mod enrollments;
+pub mod user;

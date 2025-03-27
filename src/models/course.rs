@@ -24,7 +24,6 @@ pub struct CreateCourseDto {
     pub visible: bool,
 }
 
-
 #[derive(Deserialize)]
 pub struct UpdateCourseDto {
     pub category: i32,

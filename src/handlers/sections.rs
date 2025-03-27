@@ -1,15 +1,17 @@
-use actix_web::{post, get,put, delete, web, HttpResponse, Responder};
-use sqlx::{Pool, Postgres};
-use log::{error, debug};
-use sqlx::PgPool;
-use crate::models::sections::{CreateSectionDto, Sections, UpdateSectionDto};
 use crate::error::error::handle_db_error;
+use crate::models::sections::{CreateSectionDto, Sections, UpdateSectionDto};
+use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use log::{debug, error};
+use sqlx::PgPool;
+use sqlx::{Pool, Postgres};
 
 #[get("/secciones")]
 async fn get_secciones(pool: web::Data<Pool<sqlx::Postgres>>) -> impl Responder {
-    let sections: Result<Vec<Sections>, sqlx::Error> = sqlx::query_as::<_, Sections>("SELECT id, name, course, section, summary, visible FROM get_sections()")
-        .fetch_all(pool.get_ref())
-        .await;
+    let sections: Result<Vec<Sections>, sqlx::Error> = sqlx::query_as::<_, Sections>(
+        "SELECT id, name, course, section, summary, visible FROM get_sections()",
+    )
+    .fetch_all(pool.get_ref())
+    .await;
 
     match sections {
         Ok(data) => HttpResponse::Ok().json(data),
@@ -24,19 +26,17 @@ async fn get_course_sections(
 ) -> impl Responder {
     let course_id = course_id.into_inner();
 
-    let sections: Result<Vec<Sections>, sqlx::Error> = sqlx::query_as::<_, Sections>(
-        "SELECT * FROM get_course_sections($1)"
-    )
-    .bind(course_id)
-    .fetch_all(pool.get_ref())
-    .await;
+    let sections: Result<Vec<Sections>, sqlx::Error> =
+        sqlx::query_as::<_, Sections>("SELECT * FROM get_course_sections($1)")
+            .bind(course_id)
+            .fetch_all(pool.get_ref())
+            .await;
 
     match sections {
         Ok(data) => HttpResponse::Ok().json(data),
         Err(err) => handle_db_error(err),
     }
 }
-
 
 #[post("/secciones")]
 pub async fn create_section(
@@ -45,32 +45,28 @@ pub async fn create_section(
 ) -> impl Responder {
     debug!("Creando nueva seccion para el curso: {}", payload.course);
 
-    let result = sqlx::query(
-        "SELECT create_section($1, $2, $3, $4, $5)"
-    )
-    .bind(payload.course)
-    .bind(&payload.name)
-    .bind(&payload.summary)
-    .bind(&payload.sequence)
-    .bind(&payload.visible) 
-    .execute(pool.get_ref())
-    .await;
+    let result = sqlx::query("SELECT create_section($1, $2, $3, $4, $5)")
+        .bind(payload.course)
+        .bind(&payload.name)
+        .bind(&payload.summary)
+        .bind(&payload.sequence)
+        .bind(&payload.visible)
+        .execute(pool.get_ref())
+        .await;
 
     match result {
-        Ok(_) => {
-            HttpResponse::Created().json(serde_json::json!({
-                "message": "Seccion creada exitosamente",
-                "course": payload.course,
-                "name": payload.name
-            }))
-        },
+        Ok(_) => HttpResponse::Created().json(serde_json::json!({
+            "message": "Seccion creada exitosamente",
+            "course": payload.course,
+            "name": payload.name
+        })),
         Err(err) => {
             error!("Error al crear la seccion: {}", err);
             HttpResponse::InternalServerError().json(serde_json::json!({
                 "error": "Error al crear la seccion",
                 "message": err.to_string()
             }))
-        },
+        }
     }
 }
 
@@ -83,26 +79,21 @@ pub async fn update_section(
     let id = path.into_inner();
     debug!("Actualizando seccion con ID: {}", id);
 
-    let result: Result<Sections, sqlx::Error> = sqlx::query_as::<_, Sections>(
-        "SELECT * FROM update_section($1, $2, $3, $4, $5)"
-    )
-    .bind(id)
-    .bind(payload.name.as_deref())
-    .bind(payload.summary.as_deref())
-    .bind(payload.sequence.as_deref())
-    .bind(payload.visible) 
-    .fetch_one(pool.get_ref())
-    .await;
+    let result: Result<Sections, sqlx::Error> =
+        sqlx::query_as::<_, Sections>("SELECT * FROM update_section($1, $2, $3, $4, $5)")
+            .bind(id)
+            .bind(payload.name.as_deref())
+            .bind(payload.summary.as_deref())
+            .bind(payload.sequence.as_deref())
+            .bind(payload.visible)
+            .fetch_one(pool.get_ref())
+            .await;
 
     match result {
-        Ok(section) => {
-            HttpResponse::Ok().json(section)
-        },
-        Err(sqlx::Error::RowNotFound) => {
-            HttpResponse::NotFound().json(serde_json::json!({
-                "message": "Seccion no encontrada"
-            }))
-        },
+        Ok(section) => HttpResponse::Ok().json(section),
+        Err(sqlx::Error::RowNotFound) => HttpResponse::NotFound().json(serde_json::json!({
+            "message": "Seccion no encontrada"
+        })),
         Err(err) => {
             error!("Error al actualizar seccion: {}", err);
             HttpResponse::InternalServerError().json(serde_json::json!({
@@ -113,12 +104,8 @@ pub async fn update_section(
     }
 }
 
-
 #[delete("/seccion/{id}")]
-pub async fn delete_section(
-    pool: web::Data<PgPool>,
-    path: web::Path<i32>,
-) -> impl Responder {
+pub async fn delete_section(pool: web::Data<PgPool>, path: web::Path<i32>) -> impl Responder {
     let id = path.into_inner();
     debug!("Eliminando seccion con ID: {}", id);
 
@@ -135,12 +122,10 @@ pub async fn delete_section(
                 .await;
 
             match result {
-                Ok(_) => {
-                    HttpResponse::Ok().json(serde_json::json!({
-                        "message": "Seccion eliminada exitosamente",
-                        "id": id
-                    }))
-                },
+                Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+                    "message": "Seccion eliminada exitosamente",
+                    "id": id
+                })),
                 Err(err) => {
                     error!("Error al eliminar asignación: {}", err);
                     HttpResponse::InternalServerError().json(serde_json::json!({
@@ -149,12 +134,10 @@ pub async fn delete_section(
                     }))
                 }
             }
-        },
-        Ok(None) => {
-            HttpResponse::NotFound().json(serde_json::json!({
-                "message": "Seccion no encontrada"
-            }))
-        },
+        }
+        Ok(None) => HttpResponse::NotFound().json(serde_json::json!({
+            "message": "Seccion no encontrada"
+        })),
         Err(err) => {
             error!("Error al verificar existencia de la seccion: {}", err);
             HttpResponse::InternalServerError().json(serde_json::json!({

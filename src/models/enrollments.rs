@@ -1,6 +1,6 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use chrono::NaiveDateTime;
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct Enrollment {
@@ -14,7 +14,6 @@ pub struct Enrollment {
     pub timecreated: NaiveDateTime,
     pub timemodified: NaiveDateTime,
 }
-
 
 #[derive(Deserialize)]
 pub struct CreateEnrollmentsDto {

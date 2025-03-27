@@ -12,7 +12,6 @@ pub struct Rol {
     // pub archetype: String,
 }
 
-
 #[derive(Deserialize)]
 pub struct CreateRolDto {
     pub name: String,

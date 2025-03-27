@@ -1,11 +1,11 @@
 // Aqui se exportan todos los handlers
 
-pub mod users;
+pub mod assignment;
 pub mod categories;
 pub mod courses;
-pub mod roles;
+pub mod enrollments;
 pub mod home;
-pub mod assignment;
+pub mod roles;
 pub mod sections;
 pub mod submissions;
-pub mod enrollments;
+pub mod users;

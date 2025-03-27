@@ -11,7 +11,7 @@ pub struct Sections {
     pub section: i32,
     pub name: String,
     pub summary: Option<String>,
-    pub visible: Option<bool>
+    pub visible: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -20,7 +20,7 @@ pub struct CreateSectionDto {
     pub name: String,
     pub summary: Option<String>,
     pub sequence: Option<String>,
-    pub visible: Option<bool>
+    pub visible: Option<bool>,
 }
 
 #[derive(Deserialize)]
