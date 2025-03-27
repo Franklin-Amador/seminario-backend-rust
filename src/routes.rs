@@ -12,6 +12,7 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
         .service(categories::get_categories)
         .service(courses::get_courses)
         .service(courses::create_course)
+        .service(courses::get_curso_by_id)
         .service(courses::update_course)
         .service(roles::get_roles)
         .service(roles::create_rol)

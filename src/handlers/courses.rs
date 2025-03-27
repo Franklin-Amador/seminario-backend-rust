@@ -2,7 +2,7 @@ use crate::error::error::handle_db_error;
 use crate::models::course::{Course, CreateCourseDto, UpdateCourseDto};
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use log::{debug, error};
-use sqlx::PgPool;
+use sqlx::{PgPool, Pool};
 
 // paquetes como path y error van por default no se necesitan llamar
 // para los let de la query se usa la funcion sqlx::query_as
@@ -15,6 +15,25 @@ async fn get_courses(pool: web::Data<PgPool>) -> impl Responder {
 
     match courses {
         Ok(data) => HttpResponse::Ok().json(data), // Retorna los cursos en formato JSON
+        Err(err) => handle_db_error(err),
+    }
+}
+
+#[get("/course/{id}")]
+async fn get_curso_by_id(
+    pool: web::Data<Pool<sqlx::Postgres>>,
+    path: web::Path<i32>,
+) -> impl Responder {
+    let id = path.into_inner();
+    let assignments: Result<Vec<Course>, sqlx::Error> =
+        sqlx::query_as::<_, Course>("SELECT * FROM get_course_by_id($1)")
+            .bind(id)
+            .fetch_all(pool.get_ref())
+            .await;
+
+    match assignments {
+        Ok(data) if !data.is_empty() => HttpResponse::Ok().json(data),
+        Ok(_) => HttpResponse::NotFound().body("No se encontro el curso"),
         Err(err) => handle_db_error(err),
     }
 }
