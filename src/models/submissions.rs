@@ -1,6 +1,7 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use validator::Validate;
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct AssignmentSubmission {
@@ -15,9 +16,11 @@ pub struct AssignmentSubmission {
     pub latest: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct CreateSubmissionDto {
+    #[validate(range(min = 1, message = "El ID de la asignacion debe ser positivo"))]
     pub assignment: i32,
+    #[validate(range(min = 1, message = "El ID del usuario debe ser positivo"))]
     pub userid: i32,
     pub timecreated: NaiveDateTime,
     pub timemodified: NaiveDateTime,

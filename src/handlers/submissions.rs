@@ -3,7 +3,7 @@ use log::{debug, error};
 use sqlx::{PgPool, Pool, Postgres};
 
 use crate::{
-    error::error::handle_db_error,
+    error::error_handler::handle_db_error,
     models::submissions::{AssignmentSubmission, CreateSubmissionDto},
 };
 
@@ -65,10 +65,10 @@ pub async fn create_submission(
     let result = sqlx::query("SELECT create_submission($1, $2, $3, $4, $5, $6, $7, $8)")
         .bind(payload.assignment)
         .bind(payload.userid)
-        .bind(&payload.timecreated)
+        .bind(payload.timecreated)
         .bind(payload.timemodified)
         .bind(&payload.status)
-        .bind(&payload.groupid)
+        .bind(payload.groupid)
         .bind(payload.attemptnumber)
         .bind(payload.latest)
         .execute(pool.get_ref())

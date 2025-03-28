@@ -1,4 +1,4 @@
-use crate::error::error::handle_db_error;
+use crate::error::error_handler::handle_db_error;
 use crate::models::course::{Course, CreateCourseDto, UpdateCourseDto};
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use log::{debug, error};
@@ -47,7 +47,7 @@ pub async fn create_course(
 
     let result = sqlx::query("SELECT create_course($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
         .bind(payload.category)
-        .bind(&payload.sortorder)
+        .bind(payload.sortorder)
         .bind(payload.fullname.clone())
         .bind(&payload.shortname)
         .bind(&payload.idnumber)

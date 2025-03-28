@@ -3,7 +3,7 @@ use log::{debug, error};
 use sqlx::{PgPool, Pool, Postgres};
 
 use crate::{
-    error::error::handle_db_error,
+    error::error_handler::handle_db_error,
     models::enrollments::{CreateEnrollmentsDto, Enrollment, UpdateEnrollmentsDto},
 };
 
@@ -65,8 +65,8 @@ pub async fn create_enrollments(
         .bind(payload.userid)
         .bind(payload.courseid)
         .bind(payload.status)
-        .bind(&payload.timestart)
-        .bind(&payload.timeend)
+        .bind(payload.timestart)
+        .bind(payload.timeend)
         .execute(pool.get_ref())
         .await;
 

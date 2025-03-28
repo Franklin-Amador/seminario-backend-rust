@@ -1,4 +1,4 @@
-use crate::error::error::handle_db_error;
+use crate::error::error_handler::handle_db_error;
 use crate::models::sections::{CreateSectionDto, Sections, UpdateSectionDto};
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use log::{debug, error};
@@ -50,7 +50,7 @@ pub async fn create_section(
         .bind(&payload.name)
         .bind(&payload.summary)
         .bind(&payload.sequence)
-        .bind(&payload.visible)
+        .bind(payload.visible)
         .execute(pool.get_ref())
         .await;
 

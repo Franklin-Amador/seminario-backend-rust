@@ -1,4 +1,4 @@
-use crate::error::error::handle_db_error;
+use crate::error::error_handler::handle_db_error;
 use crate::models::user::User;
 use actix_web::{get, web, HttpResponse, Responder};
 use sqlx::Pool;

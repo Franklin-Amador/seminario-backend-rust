@@ -1,4 +1,4 @@
-use crate::error::error::handle_db_error;
+use crate::error::error_handler::handle_db_error;
 use crate::models::assignment::{
     Assignment, AssignmentsProx, CreateAssignmentDto, UpdateAssignmentDto,
 };
@@ -117,8 +117,8 @@ pub async fn create_assignment(
         .bind(&payload.name)
         .bind(&payload.intro)
         .bind(payload.section)
-        .bind(&payload.duedate)
-        .bind(&payload.allowsubmissionsfromdate)
+        .bind(payload.duedate)
+        .bind(payload.allowsubmissionsfromdate)
         .bind(payload.grade)
         .execute(pool.get_ref())
         .await;

@@ -12,7 +12,6 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use tracing::info;
-use tracing_subscriber;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

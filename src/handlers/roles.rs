@@ -1,4 +1,4 @@
-use crate::error::error::handle_db_error;
+use crate::error::error_handler::handle_db_error;
 use crate::models::rol::{CreateRolDto, Rol};
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use log::{debug, error};

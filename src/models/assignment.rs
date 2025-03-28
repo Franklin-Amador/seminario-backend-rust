@@ -3,6 +3,7 @@ use chrono::NaiveDateTime;
 // models/assignment.rs
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use validator::Validate;
 
 #[derive(Serialize, FromRow)]
 #[sqlx(rename_all = "snake_case")]
@@ -44,38 +45,42 @@ pub struct Assignment {
     pub markingallocation: bool,
 }
 
-#[derive(Deserialize)]
-pub struct CreateAssignmentDto {
-    pub course: i32,
-    pub name: String,
-    pub intro: String,
-    pub section: i32,
-    pub duedate: Option<NaiveDateTime>,
-    pub allowsubmissionsfromdate: Option<NaiveDateTime>,
-    pub grade: Option<i32>,
-}
-
-// #[derive(Debug, Deserialize)]
+// #[derive(Deserialize)]
 // pub struct CreateAssignmentDto {
 //     pub course: i32,
-//     #[validate(length(min = 1, message = "El nombre no puede estar vacío"))]
 //     pub name: String,
 //     pub intro: String,
-//     #[validate(range(min = 1, message = "El section debe ser positivo"))]
 //     pub section: i32,
 //     pub duedate: Option<NaiveDateTime>,
 //     pub allowsubmissionsfromdate: Option<NaiveDateTime>,
-//     #[validate(range(min = 0, max = 100, message = "El grade debe estar entre 0 y 100"))]
 //     pub grade: Option<i32>,
 // }
 
-#[derive(Deserialize)]
+#[derive(Debug, Validate, Deserialize)]
+pub struct CreateAssignmentDto {
+    #[validate(range(min = 1, message = "El ID del curso debe ser positivo"))]
+    pub course: i32,
+    #[validate(length(min = 1, message = "El nombre no puede estar vacío"))]
+    pub name: String,
+    pub intro: String,
+    #[validate(range(min = 1, message = "El section debe ser positivo"))]
+    pub section: i32,
+    pub duedate: Option<NaiveDateTime>,
+    pub allowsubmissionsfromdate: Option<NaiveDateTime>,
+    #[validate(range(min = 0, max = 100, message = "El grade debe estar entre 0 y 100"))]
+    pub grade: Option<i32>,
+}
+
+#[derive(Deserialize, Validate)]
 pub struct UpdateAssignmentDto {
+    #[validate(length(min = 1, message = "El nombre no puede estar vacío"))]
     pub name: Option<String>,
     pub intro: Option<String>,
+    #[validate(range(min = 1, message = "El section debe ser positivo"))]
     pub section: Option<i32>,
     pub duedate: Option<NaiveDateTime>,
     pub allowsubmissionsfromdate: Option<NaiveDateTime>,
+    #[validate(range(min = 0, max = 100, message = "El grade debe estar entre 0 y 100"))]
     pub grade: Option<i32>,
     pub alwaysshowdescription: Option<bool>,
     pub nosubmissions: Option<bool>,
