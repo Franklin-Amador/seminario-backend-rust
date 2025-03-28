@@ -4,10 +4,6 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-# # concurrency: 
-#   group: ci-${{ gitgub.ref }}  
-#   cancel-in-progress: true  
-
 env:
   CARGO_TERM_COLOR: always
   PGUSER: admin
@@ -17,7 +13,6 @@ env:
   PGPORT: 5432
 jobs:
   test:
-    name: Rust proyecto
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -74,7 +69,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        chunk: [1, 2, 3, 4] # Dividir las pruebas en chunks para paralelizar
+        chunk: [0, 1, 2, 3] # Usar 0-based para evitar la resta
     steps:
     - uses: actions/checkout@v3
     - name: Install Rust
@@ -92,8 +87,8 @@ jobs:
     - name: Run stress test chunk ${{ matrix.chunk }}
       run: |
         # Ejecutar una porción de las pruebas de estrés
-        # Asegúrate de adaptar esto a tu estructura de pruebas
-        TEST_FILES=$(find tests -name "stress.rs" | sort | awk "NR % 4 == ${{ matrix.chunk - 1 }}")
+        # Utilizamos awk con el índice directamente sin resta
+        TEST_FILES=$(find tests -name "stress.rs" | sort | awk "NR % 4 == ${{ matrix.chunk }}")
         for file in $TEST_FILES; do
           RUST_MIN_STACK=8388608 cargo test --release --test $(basename $file .rs)
         done
