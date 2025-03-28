@@ -13,6 +13,7 @@ env:
   PGPORT: 5432
 jobs:
   test:
+    environment: seminario 
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -113,6 +114,7 @@ jobs:
         tags: ${{ secrets.DOCKER_HUB_USERNAME }}/seminario-backend-rust:latest
   
   deploy:
+    environment: seminario 
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
