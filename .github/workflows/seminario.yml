@@ -11,6 +11,7 @@ env:
   PGDATABASE: campus_virtual
   PGHOST: localhost
   PGPORT: 5432
+  environment: seminario
 jobs:
   test:
     environment: seminario 
