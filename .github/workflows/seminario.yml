@@ -118,11 +118,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v3
-    - name: Install doctl
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
-    - name: Deploy to DigitalOcean
+    - name: Deploy to Render via webhook
       run: |
-        doctl apps create --spec ./.do/app.yaml
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
