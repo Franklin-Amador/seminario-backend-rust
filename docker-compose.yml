@@ -82,7 +82,7 @@ services:
     volumes:
       - ./tests:/tests
     entrypoint: ["k6"]
-    command: ["run", "--out=influxdb=http://influxdb:8086/k6", "/tests/test_script.js"]
+    command: ["run", "--out", "csv=/tests/test_results.csv", "/tests/test_script.js"]
     depends_on:
       - rust_api
       - influxdb

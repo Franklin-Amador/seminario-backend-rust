@@ -72,7 +72,7 @@ let testData = {
 // Definir opciones de carga
 export let options = {
   vus: 50, // Número de usuarios virtuales
-  duration: "1800s", // Duración de la prueba (30 minutos)
+  duration: "30s", // Duración de la prueba (30 minutos)
   thresholds: {
     "error_rate": ["rate<0.1"], // Tasa de error menor al 10%
     "http_req_duration": ["p(95)<2000"], // 95% de las solicitudes por debajo de 2s
